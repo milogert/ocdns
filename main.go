@@ -1,16 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/render"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
-
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	m := martini.Classic()
+
+	// Set a layout.
+	m.Use(render.Renderer(render.Options{
+		Layout: "layout",
+	}))
+
+	// render html templates from templates directory
+	m.Use(render.Renderer())
+
+	m.Get("/", func(r render.Render) {
+		r.HTML(200, "hello", "jeremy")
+	})
+
+	m.Run()
 }
