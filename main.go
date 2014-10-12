@@ -14,12 +14,14 @@ func main() {
 	}))
 
 	m.Get("/", func(r render.Render) {
-		r.HTML(200, "hello", "jeremy")
+		r.HTML(200, "index")
 	})
 
-	m.Get("/main", func(r render.Render) {
-		r.HTML(200, "hello", "milo")
+	m.Get("/hello", func(r render.Render) {
+		r.HTML(200, "hello", "test")
 	})
+
+	m.Get("/login", func())
 
 	m.Run()
 }
