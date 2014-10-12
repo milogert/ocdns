@@ -13,11 +13,12 @@ func main() {
 		Layout: "layout",
 	}))
 
-	// render html templates from templates directory
-	m.Use(render.Renderer())
-
 	m.Get("/", func(r render.Render) {
 		r.HTML(200, "hello", "jeremy")
+	})
+
+	m.Get("/main", func(r render.Render) {
+		r.HTML(200, "hello", "milo")
 	})
 
 	m.Run()
