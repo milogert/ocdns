@@ -17,15 +17,19 @@ func main() {
   }))
 
   m.Get("/", func(r render.Render) {
+    // TODO: Perform checks to see if the user is logged in. If they are, then
+    // render a specific page based on their role.
     r.HTML(200, "index", "")
   })
 
-  m.Get("/hello", func(r render.Render) {
-    r.HTML(200, "hello", "test")
-  })
-
   m.Get("/login", func(r render.Render) {
-    r.HTML(200, "hello", "test")
+    // Do stuff.
+
+    // TODO: Check what the user's role and return a page depending upon that.
+
+    // r.HTML(200, "/admin", "")
+    // r.HTML(200, "/judge", "")
+    // r.HTML(200, "/contestant", "")
   })
 
   m.Get("/judge", func(r render.Render) {
