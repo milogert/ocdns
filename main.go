@@ -3,9 +3,10 @@ package main
 import (
   "github.com/go-martini/martini"
   "github.com/martini-contrib/render"
-  "code.google.com/p/go-sqlite/go1/sqlite3"
+  "github.com/mattn/go-sqlite3"
   "time"
   "encoding/json"
+  "strconv"
 )
 
 func main() {
@@ -37,28 +38,43 @@ func main() {
   })
 
   m.Get("/api/getSubmissions", func(r render.Render) {
-    aConn, _ := sqlite3.Open("ocdns.db")
+    aConn, err := sql.Open("ocdns.db")
 
     // Set up the arguments.
     aTime = time.Now()
     const aLayout = "Jan 2, 2006 at 3:04pm (MST)"
-    aArgs := sqlite3.NamedArgs{"$time": aTime.format(aLayout)}
+    //aArgs := sql.NamedArgs{"$time": aTime.format(aLayout)}
 
     // Query the database.
     // aConn.Exec("SELECT * FROM submissions WHERE submitted >= $time", aArgs)
-    aRes, aErr := aConn.Query("SELECT * FROM submissions WHERE submitted >= $time", aArgs)
+    rs, aErr := aConn.Query("SELECT * FROM `Submissions` WHERE `Submissions`.`timestamp` >= " +  aTime.format(aLayout))
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer rs.Close()
 
-    // Return the results in a json object.
-    var aRet map[string]RowMap
-    aRow := make(sqlite3.RowMap)
-    for aRes, aErr, aErr == nil; err = aRes.next() {
-      // var aId int64
-      // var aSubmitTime time
-      // var aSubmit string
-      // var aProblem int64
+    // Return the results in a json object
+    var aRet [][4]string  
+    var i int 
+    i := 0
+    for rs.Next() {
+      var submission_id int
+      var team_id int
+      var problem_id int
+      var judge_id int
+      var judged int 
+      var submitTime Time 
 
-      aRes.Scan(&aId, aRow)
-      aRet[aId] = aRow
+      rs.Scan(&submission_id, &team_id, &problem_id, &judge_id, &judged, &submitTime)
+
+      aRet[i][0] = Itoa(submission_id)
+      aRet[i][1] = Itoa(team_id)
+      aRet[i][2] = Itoa(problem_id)
+      aRet[i][3] = Itoa(judge_id)
+      aRet[i][4] = Itoa(judged)
+      aRet[i][5] = submitTime.format(aLayout)
+
+      i++
     }
     aJson, aErr := json.Marshal(aRet)
     return aJson
