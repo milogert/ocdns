@@ -6,9 +6,8 @@
 DROP TABLE IF EXISTS `Team`;
 
 CREATE TABLE `Team` ( 
-	`team_id` int(3) NOT NULL AUTO_INCREMENT,
-	`name` char(99) NOT NULL DEFAULT '',
- 	PRIMARY KEY (`team_id`)
+	`team_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` CHAR(64) DEFAULT '' NOT NULL
 );
 
 INSERT INTO `Team` VALUES (1, 'GoLang');
@@ -21,13 +20,11 @@ INSERT INTO `Team` VALUES (2, 'Swift');
 DROP TABLE IF EXISTS `User`;
 
 CREATE TABLE `User` ( 
-	`user_id` int(3) NOT NULL AUTO_INCREMENT,
-	`name_first` char(52) NOT NULL DEFAULT '',
-	`name_last` char(52) NOT NULL DEFAULT '',
-	`role` enum('Player', 'Admin', 'Judge') NOT NULL DEFAULT 'Player',
-	`team_id` int(3) NOT NULL DEFAULT 0,
-
- 	PRIMARY KEY (`user_id`)
+	`user_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name_first` CHAR(64)NOT NULL,
+	`name_last` CHAR(64)NOT NULL,
+	`role` enum('Player', 'Admin', 'Judge') DEFAULT 'Player' NOT NULL,
+	`team_id` INTEGER NOT NULL DEFAULT 0
 );
 
 INSERT INTO `User` VALUES (1, 'Luke', 'Pasma', 'Admin', 1);
@@ -42,11 +39,40 @@ INSERT INTO `User` VALUES (1, 'Benjamin', 'Kobane', 'Admin', 1);
 DROP TABLE IF EXISTS `Problems`;
 
 CREATE TABLE `Problems` ( 
-	`problem_id` int(3) NOT NULL AUTO_INCREMENT,
-	`question` char(300) NOT NULL DEFAULT '',
-	`answer` char(300) NOT NULL DEFAULT '',
- 	PRIMARY KEY (`problem_id`)
+	`problem_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`question` CHAR(64) NOT NULL,
+	`answer` CHAR(64) NOT NULL
 );
 
 INSERT INTO `Problems` VALUES (1, 'What is your team name?', 'GoLang');
 INSERT INTO `Problems` VALUES (2, 'What class are you in?', 'ProgLang');
+
+--
+-- Table structure for table `Submissions`
+--
+
+DROP TABLE IF EXISTS `Submissions`;
+
+CREATE TABLE `Submissions` ( 
+	`submission_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`team_id` INTEGER NOT NULL DEFAULT 0,
+	`timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO `Submissions` VALUES (1, 1);
+
+--
+-- Table structure for table `Language`
+--
+
+DROP TABLE IF EXISTS `Language`;
+
+CREATE TABLE `Language` ( 
+	`language_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` CHAR(64) NOT NULL,
+	`compiler` CHAR(64) DEFAULT '' NOT NULL,
+	`interpreter` CHAR(64) NOT NULL,
+	`flag` CHAR(64) DEFAULT '' NOT NULL
+);
+
+INSERT INTO `Language` VALUES (1, 'Go', 'gcc', 'go', 'run');
