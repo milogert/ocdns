@@ -1,15 +1,18 @@
 package main
 
 import (
+  "database/sql"
   "github.com/go-martini/martini"
   "github.com/martini-contrib/render"
   "github.com/martini-contrib/sessions"
-  "github.com/mattn/go-sqlite3"
+  _ "github.com/mattn/go-sqlite3"
   "time"
   "encoding/json"
   "os"
   "os/exec"
   "fmt"
+  "log"
+  "strconv"
 )
 
 func resetDb() {
@@ -37,7 +40,10 @@ func resetDb() {
 
 func main() {
   // Reset the database.
-  resetDb()
+  //resetDb()
+  
+  // TODO: Create default admin account.
+  // TODO: Use config file?
 
   // Get the Martini instance.
   m := martini.Classic()
@@ -51,7 +57,7 @@ func main() {
     Layout: "layout",
   }))
 
-  m.Get("/", func(r render.Render) {
+  m.Get("/", func(r render.Render, session sessions.Session) {
     // TODO: Perform checks to see if the user is logged in. If they are, then
     // render a specific page based on their role.
     role := session.Get("role")
@@ -67,60 +73,60 @@ func main() {
     }
   })
 
-  m.Get("/judge", func(r render.Render) {
-    role := session.Get("role")
+  m.Get("/judge", func(r render.Render, session sessions.Session) {
+    //role := session.Get("role")
 
-    if role == "Judge" {
+    //if role == "Judge" {
       r.HTML(200, "judge", "test")
-    } else {
-      r.HTML(302, "index", "test")
-    }
-  })
-  
-  m.Get("/judge", func(r render.Render) {
-    r.HTML(200, "judge", "test")
+    //} else {
+    //  r.HTML(302, "index", "test")
+    //}
   })
 
-  m.Get("/api/getSubmissions", func(r render.Render) {
-    aConn, err := sql.Open("ocdns.db")
+  m.Get("/api/getSubmissions", func(r render.Render) []byte {
+    aConn, err := sql.Open("sqlite3", "ocdns.db")
 
     // Set up the arguments.
-    aTime = time.Now()
+    aTime := time.Now()
     const aLayout = "Jan 2, 2006 at 3:04pm (MST)"
-    //aArgs := sql.NamedArgs{"$time": aTime.format(aLayout)}
+    //aArgs := sql.NamedArgs{"$time": aTime.Format(aLayout)}
 
     // Query the database.
     // aConn.Exec("SELECT * FROM submissions WHERE submitted >= $time", aArgs)
-    rs, aErr := aConn.Query("SELECT * FROM `Submissions` WHERE `Submissions`.`timestamp` >= " +  aTime.format(aLayout))
-    if err != nil {
+    rs, aErr := aConn.Query("SELECT * FROM `Submissions` WHERE `Submissions`.`timestamp` >= " +  aTime.Format(aLayout))
+    if aErr != nil {
       log.Fatal(err)
     }
     defer rs.Close()
 
     // Return the results in a json object
-    var aRet [][4]string  
+    var aRet [][6]string  
     var i int 
-    i := 0
+    i = 0
     for rs.Next() {
       var submission_id int
       var team_id int
       var problem_id int
       var judge_id int
-      var judged int 
-      var submitTime Time 
+      var judged int
+      var submitTime string
 
       rs.Scan(&submission_id, &team_id, &problem_id, &judge_id, &judged, &submitTime)
 
-      aRet[i][0] = Itoa(submission_id)
-      aRet[i][1] = Itoa(team_id)
-      aRet[i][2] = Itoa(problem_id)
-      aRet[i][3] = Itoa(judge_id)
-      aRet[i][4] = Itoa(judged)
-      aRet[i][5] = submitTime.format(aLayout)
+      aRet[i][0] = strconv.Itoa(submission_id)
+      aRet[i][1] = strconv.Itoa(team_id)
+      aRet[i][2] = strconv.Itoa(problem_id)
+      aRet[i][3] = strconv.Itoa(judge_id)
+      aRet[i][4] = strconv.Itoa(judged)
+      aRet[i][5] = aLayout
 
       i++
     }
+    
+    // Conver the array into json.
     aJson, aErr := json.Marshal(aRet)
+    
+    // Return the json generated.
     return aJson
   })
 
