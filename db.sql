@@ -56,10 +56,11 @@ DROP TABLE IF EXISTS `Submissions`;
 CREATE TABLE `Submissions` ( 
 	`submission_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`team_id` INTEGER NOT NULL DEFAULT 0,
+	`problem_id` INTEGER NOT NULL DEFAULT 0,
+	`judge_id` INTEGER NOT NULL DEFAULT 0,
+	`judged` INTEGER NOT NULL DEFAULT 0,
 	`timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO `Submissions` VALUES (1, 1);
 
 --
 -- Table structure for table `Language`
@@ -74,5 +75,3 @@ CREATE TABLE `Language` (
 	`interpreter` CHAR(64) NOT NULL,
 	`flag` CHAR(64) DEFAULT '' NOT NULL
 );
-
-INSERT INTO `Language` VALUES (1, 'Go', 'gcc', 'go', 'run');
