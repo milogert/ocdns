@@ -92,7 +92,17 @@ func main() {
     //  r.HTML(302, "index", "test")
     //}
   })
-  
+
+  m.Get("/player", func(r render.Render, session sessions.Session) {
+    //role := session.Get("role")
+
+    //if role == "player" {
+      r.HTML(200, "player", "test")
+    //} else {
+    //  r.HTML(302, "index", "test")
+    //}
+  })
+
   m.Get("/api/getSubmissions", func(r render.Render) []byte {
     aConn, err := sql.Open("sqlite3", "ocdns.db")
 
