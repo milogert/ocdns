@@ -31,26 +31,60 @@
 			</div>
 			<div class="modal-body">
 				<form role="form">
-		                        <div class="form-group">
-		                            <label for="recipient-name" class="control-label">Contest Name:</label>
-		                            <input type="text" class="form-control" id="contest-name">
-		                        </div>
-		                        <div class="form-group">
-		                            <label for="message-text" class="control-label">Number of Teams:</label>
-                            		    <input type="number" class="form-control" id="contest-name">
-		                        </div>
-		                        <div class="form-group">
-		                            <label for="message-text" class="control-label">Number of Judges:</label>
-		                            <input type="number" class="form-control" id="contest-name">
-		                        </div>
-		                        <div class="form-group">
-		                            <label for="message-text" class="control-label">Number of Questions:</label>
-		                            <input type="number" class="form-control" id="contest-name">
-		                        </div>
-		                        <div class="form-group">
-		                            <label for="message-text" class="control-label">Responce Time (min):</label>
-		                            <input type="number" class="form-control" id="contest-name">
-		                        </div>
+					<div class="row">
+						<div class="col-sm-12">
+							<label for="recipient-name" class="control-label">Contest Name:</label>
+							<input type="text" class="form-control" id="contest-name">
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<label for="message-text" class="control-label">Number of Teams:</label>
+							<div class="row">
+								<div class="col-sm-8">
+									<input type="number" class="form-control" id="teams-num">
+								</div>
+								<div class="col-sm-4 text-center">
+									<button type="button" class="btn btn-primary" data-toggle="modal" data-target=".teams">Edit Teams</button>
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<label for="message-text" class="control-label">Number of Judges:</label>
+							<div class="row">
+								<div class="col-sm-8">
+									<input type="number" class="form-control" id="judge-num">
+								</div>
+								<div class="col-sm-4 text-center">
+									<button type="button" class="btn btn-primary" data-toggle="modal" data-target=".judges">Edit Judges</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<label for="message-text" class="control-label">Number of Questions:</label>
+							<div class="row">
+								<div class="col-sm-8">
+									<input type="number" class="form-control" id="question-num">
+								</div>
+								<div class="col-sm-4 text-center">
+									<button type="button" class="btn btn-primary" data-toggle="modal" data-target=".questions">Edit Questions</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<label for="message-text" class="control-label">Responce Time (min):</label>
+							<input type="number" class="form-control" id="contest-name">
+						</div>
+					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
@@ -60,6 +94,252 @@
 		</div>
 	</div>
 </div>
+
+
+
+<div class="modal fade teams" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="myModalLabel">Edit Teams</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+	
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Team 1:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t1-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t1-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Team 2:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t2-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t2-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Team 3:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t3-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="t3-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary">Save changes</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<div class="modal fade judges" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="myModalLabel">Edit Judges</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+	
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Judge 1:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j1-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j1-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Judge 2:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j2-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j2-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Judge 3:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">User Name:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j3-user-name">
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Password:</label>
+								</div>
+								<div class="col-md-3">
+									<input type="string" class="form-control" id="j3-password">
+								</div>
+							</div>	
+						</div>
+					</div>
+
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary">Save changes</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="modal fade questions" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="myModalLabel">Edit Questions</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+	
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Question 1:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Question:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Solution:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Question 2:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Question:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Solution:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+							</div>	
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-12">
+							<label for="message-text" class="control-label">Question 3:</label>
+							<div class="row">
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Question:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+								<div class="col-md-3 text-center">
+									<label for="message-text" class="control-label">Solution:</label>
+								</div>
+								<div class="col-md-12">
+									<textarea class="form-control" rows="3"></textarea>
+								</div>
+							</div>	
+						</div>
+					</div>
+
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary">Save changes</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 <div class="modal fade confirm" id="smallModal" tabindex="-1" role="dialog" aria-labelledby="smallModal" aria-hidden="true">
 	<div class="modal-dialog modal-sm">
