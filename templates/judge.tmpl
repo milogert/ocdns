@@ -15,7 +15,8 @@ $(function() {
     url: "/api/getSubmissions",
   })
   .done(function(theData) {
-    $("#requests").append("<li>" + theData + "</li>");
+    var aJson = $.jsonParse(theData);
+    $("#requests").append("<li>" + aJson + "</li>");
   })
   .fail(function() {
     alert("Error in retrieving data.");

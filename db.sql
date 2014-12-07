@@ -73,5 +73,6 @@ CREATE TABLE `Language` (
 	`name` CHAR(64) NOT NULL,
 	`compiler` CHAR(64) DEFAULT '' NOT NULL,
 	`interpreter` CHAR(64) NOT NULL,
-	`flag` CHAR(64) DEFAULT '' NOT NULL
+	`flags` CHAR(64) DEFAULT '' NOT NULL
 );
+
