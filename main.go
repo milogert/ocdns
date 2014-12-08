@@ -384,10 +384,10 @@ func main() {
     }
 
     // Conver the array into json.
-    aJson, aErr := json.Marshal(aRet)
+    aJson, _ := json.Marshal(aRet)
 
     // Return the json generated.
-    return aJson
+    return string(aJson)
   })
 
   m.Run()
