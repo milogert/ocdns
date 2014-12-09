@@ -68,21 +68,21 @@ func genAdmin() bool {
   hasher.Write([]byte(now))
   sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 
-  // Report the password to the user.
-  fmt.Println("!! Password for the admin account is: " + sha)
-
   // Insert the password into the database.
   aConn, _ := sql.Open("sqlite3", "ocdns.db")
   defer aConn.Close()
   rs, aErr := aConn.Query(`
     INSERT INTO User
-    VALUES(0, "admin", "` + sha + `, "Admin", "Admin", "admin", -1);
+    VALUES(0, "admin", "` + sha + `", "Admin", "Admin", "admin", -1);
   `)
   if aErr != nil {
     log.Fatal(aErr)
     return false
   }
   defer rs.Close()
+
+  // Report the password to the user.
+  fmt.Println("!! Password for the admin account is: " + sha)
 
   return true
 }
@@ -349,6 +349,8 @@ func main() {
     // Declare the struct to return json.
     ret := UploadResponse{}
     var j []byte
+
+    // TODO: Make sure the problem doesn't already exist.
 
     if diff {
       // The diff of the answer and the submission returned 0.
