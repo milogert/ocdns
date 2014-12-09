@@ -1,22 +1,41 @@
 package main
 
 import (
+  "crypto/sha1"
   "database/sql"
+  "encoding/base64"
   "encoding/json"
   "fmt"
   "github.com/go-martini/martini"
+  "github.com/martini-contrib/binding"
   "github.com/martini-contrib/render"
   "github.com/martini-contrib/sessions"
-  _ "github.com/mattn/go-sqlite3"
+  "io"
   "log"
+  "mime/multipart"
   "os"
   "os/exec"
   "strconv"
   "time"
-  "net/http"
-  "io"
+  _ "github.com/mattn/go-sqlite3"
 )
 
+/* Structs ********************************************************************/
+type FileUpload struct {
+  ProblemNum  int                   `form:"problemNum"  binding:"required"`
+  Language    int                   `form:"language"    binding:"required"`
+  File        *multipart.FileHeader `form:"file"        binding:"required"`
+}
+
+type UploadResponse struct {
+  ProblemId string `json:"problem_id"`
+  IsJudged bool `json:"is_judged"`
+  JudgeMessage string `json:"message"`
+  Correct bool `json:"correct"`
+}
+
+
+/******************************************************************************/
 func resetDb() {
   // Remove the old database.
   fmt.Println("ii Removing the old database.")
@@ -40,25 +59,90 @@ func resetDb() {
   fmt.Println("ii Successfully created the new file.")
 }
 
+
+/******************************************************************************/
+func genAdmin() bool {
+  // Create a hasher and generate a password.
+  hasher := sha1.New()
+  now := fmt.Sprint(time.Now())
+  hasher.Write([]byte(now))
+  sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
+  // Report the password to the user.
+  fmt.Println("!! Password for the admin account is: " + sha)
+
+  // Insert the password into the database.
+  aConn, _ := sql.Open("sqlite3", "ocdns.db")
+  defer aConn.Close()
+  rs, aErr := aConn.Query(`
+    INSERT INTO User
+    VALUES(0, "admin", "` + sha + `, "Admin", "Admin", "admin", -1);
+  `)
+  if aErr != nil {
+    log.Fatal(aErr)
+    return false
+  }
+  defer rs.Close()
+
+  return true
+}
+
+
+func getLanguage(language string) (string, string, string, string, string, string) {
+  // Open the database.
+  aConn, _ := sql.Open("sqlite3", "ocdns.db")
+  defer aConn.Close()
+
+  // Get the language.
+  rs, query_err := aConn.Query(`
+    SELECT compiler, c_flags, c_type, interpreter, i_flags, i_type
+    FROM Language
+    WHERE name = ` + language + `
+    LIMIT 1;
+  `)
+  if query_err != nil {
+    log.Fatal(query_err)
+  }
+  defer rs.Close()
+
+  // Get the next (only) row.
+  rs.Next()
+
+  // Set up the variables.
+  var compiler string
+  var c_flags string
+  var c_type string
+  var interpreter string
+  var i_flags string
+  var i_type string
+
+  // Scan the row and plop them in the variables.
+  rs.Scan(&compiler, &c_flags, &c_type, &interpreter, &i_flags, &i_type)
+
+  return compiler, c_flags, c_type, interpreter, i_flags, i_type
+}
+
+/******************************************************************************/
 func main() {
   // Reset the database.
   //resetDb()
 
-  // TODO: Create default admin account.
-  // TODO: Use config file?
-  rs, aErr := aConn.Query("SELECT * FROM `Submissions` WHERE `Submissions`.`timestamp` >= " + aTime.Format(aLayout))
-  if aErr != nil {
-    log.Fatal(err)
+  // Create the default admin account.
+  gen := genAdmin()
+  if !gen {
+    log.Print("-- Admin account not created.")
   }
-  defer rs.Close()
 
+
+  // TODO: Use config file?
 
 
   // Get the Martini instance.
   m := martini.Classic()
 
   // Create session store.
-  store := sessions.NewCookieStore([]byte("doublesecret"))
+  now := fmt.Sprint(time.Now())
+  store := sessions.NewCookieStore([]byte(now))
   m.Use(sessions.Sessions("ocdns", store))
 
   // Set a layout.
@@ -66,16 +150,17 @@ func main() {
     Layout: "layout",
   }))
 
+  /* Index route **************************************************************/
   m.Get("/", func(r render.Render, session sessions.Session) {
     // TODO: Perform checks to see if the user is logged in. If they are, then
     // render a specific page based on their role.
     role := session.Get("role")
 
-    if role == "Admin" {
+    if role == "admin" {
       r.HTML(302, "admin", "")
-    } else if role == "Judge" {
+    } else if role == "judge" {
       r.HTML(302, "judge", "")
-    } else if role == "Player" {
+    } else if role == "player" {
       r.HTML(302, "player", "")
     } else {
       r.HTML(200, "index", "")
@@ -86,7 +171,7 @@ func main() {
   m.Get("/judge", func(r render.Render, session sessions.Session) {
     //role := session.Get("role")
 
-    //if role == "Judge" {
+    //if role == "judge" {
     r.HTML(200, "judge", "test")
     //} else {
     //  r.HTML(302, "index", "test")
@@ -97,7 +182,7 @@ func main() {
   m.Get("/admin", func(r render.Render, session sessions.Session) {
     //role := session.Get("role")
 
-    //if role == "Admin" {
+    //if role == "admin" {
     r.HTML(200, "admin", "test")
     //} else {
     //  r.HTML(302, "index", "test")
@@ -162,7 +247,7 @@ func main() {
       aRet["languages"] = languages
 
       // Conver the array into json.
-      aJson, aErr := json.Marshal(aRet)
+      aJson, _ := json.Marshal(aRet)
 
       r.HTML(200, "player", string(aJson))
     } else {
@@ -170,10 +255,10 @@ func main() {
     }
   })
 
-  /* Player submission route **************************************************/
-  m.Get("/api/submitCode", func(r render.Render, h http.Request) string {
+  /* Player: Submit code ******************************************************/
+  m.Post("/api/submitCode", binding.MultipartForm(FileUpload{}), func(uf FileUpload) string {
     // Get the team id.
-    team_id := 0//session.Get("team_id")
+    team_id := string(0)//string(session.Get("team_id"))
 
     // if team_id == nil {
     //  return
@@ -186,90 +271,53 @@ func main() {
 
 
     // Get form stuff.
-    multi_err := h.ParseMultipartForm(100000)
-    if multi_err != nil {
-      return multi_err.Error()
+    problem_id := string(uf.ProblemNum)
+    language := string(uf.Language)
+    file, err := uf.File.Open()
+    if err != nil {
+      return err.Error()
     }
+    defer file.Close()
 
-    problem_id := h.MultipartForm.File["question"]
-    language := h.MultipartForm.File["language"]
-    file := h.MultipartForm.File["file"]
 
-    var filepath = "./" + string(team_id) + "/" + file[0].Filename
+    // Create file path, without extension.
+    filepath := "./submissions/" + team_id + "/" + problem_id
+
+
+    // Get the language.
+    compiler, c_flags, c_type, interpreter, i_flags, i_type := getLanguage(language)
 
 
     // Save the file.
-    log.Println("getting handle to file")
-    file_s, open_err := file[0].Open()
-    defer file_s.Close()
-    if open_err != nil {
-      return open_err.Error()
-    }
-
-    log.Println("creating destination file")
-    dst, create_err := os.Create("./" + string(team_id) + "/" + file[0].Filename)
+    dst, create_err := os.Create(filepath + "." + c_type)
     defer dst.Close()
     if create_err != nil {
       return create_err.Error()
     }
 
-    log.Println("copying the uploaded file to the destination file")
-    if _, copy_err := io.Copy(dst, file_s); copy_err != nil {
+    // Copy the file into the destination.
+    if _, copy_err := io.Copy(dst, file); copy_err != nil {
       return copy_err.Error()
     }
 
 
-    // Get the language.
-    rs, query_err := aConn.Query(`
-      SELECT compiler, c_flags, interpreter, i_flags
-      FROM Language
-      WHERE name = ` + language + `
-      LIMIT 1;
-    `)
-    if query_err != nil {
-      log.Fatal(query_err)
-    }
-    defer rs.Close()
-
-    // Get the next (only) row.
-    rs.Next()
-
-    // Set up the variables.
-    var compiler string
-    var c_flags string
-    var interpreter string
-    var i_flags string
-
-    // Scan the row and plop them in the variables.
-    rs.Scan(&compiler, &c_flags, &interpreter, &i_flags)
-
-
     // Run the file.
-    c_err := 0
-    i_err := 0
+    // var c_out []byte
+    var c_err error
+    var i_out []byte
+    var i_err error
+
     // Find if it needs a compiler or not.
     if compiler != "" {
-      cmd := exec.Command(compiler, c_flags, filepath)
-      cmd.Stdin = os.Stdin
-      cmd.Stdout = os.Stdout
-      cmd.Stderr = os.Stderr
-      c_err := cmd.Run()
-
-      // Capture err and do things with it.
-      fmt.Println(err)
+      _, c_err = exec.Command(compiler, c_flags, filepath + "." + c_type).Output()
     }
 
     // Run the interpreter.
-    // TODO: Find the file path of the output.
-    // cmd := exec.Command(interpreter, i_flags, output)
-    // cmd.Stdin = os.Stdin
-    // cmd.Stdout = os.Stdout
-    // cmd.Stderr = os.Stderr
-    // i_err := cmd.Run()
+    i_out, i_err = exec.Command(interpreter, i_flags, filepath + "." + i_type).Output()
 
 
     // Get the problem.
-    rs, query_err = aConn.Query(`
+    rs, query_err := aConn.Query(`
       SELECT question, answer
       FROM Problem
       WHERE problem_id = ` + problem_id + `
@@ -293,13 +341,14 @@ func main() {
 
     // Diff the output of the files.
     diff := false
-    if c_err == 0 && i_err == 0 {
-      diff = answer == output
+    if c_err == nil && i_err == nil {
+      diff = answer == string(i_out)
     }
 
 
-    // Decide whether or not to auto judge.
-    auto_judge := true
+    // Declare the struct to return json.
+    ret := UploadResponse{}
+    var j []byte
 
     if diff {
       // The diff of the answer and the submission returned 0.
@@ -312,8 +361,18 @@ func main() {
       }
       defer rs.Close()
 
-      return problem_id, true, "Auto-judged"
-    } else if c_err != 0 {
+      // Put the items in the struct declared above.
+      ret.ProblemId = problem_id
+      ret.IsJudged = true
+      ret.JudgeMessage = "Auto-Judged"
+      ret.Correct = true
+
+      // Marshal the JSON.
+      j, _ = json.Marshal(ret)
+
+      // Return the JSON as a string.
+      return string(j)
+    } else if c_err != nil {
       // Compiler returned non 0.
       rs, query_err = aConn.Query(`
         INSERT INTO Submission(team_id, problem_id, judged, correct)
@@ -324,8 +383,18 @@ func main() {
       }
       defer rs.Close()
 
-      return problem_id, true, "Auto-judged"
-    } else if c_err == 0 && i_err != 0 {
+      // Put the items in the struct declared above.
+      ret.ProblemId = problem_id
+      ret.IsJudged = true
+      ret.JudgeMessage = "Auto-Judged"
+      ret.Correct = false
+
+      // Marshal the JSON.
+      j, _ = json.Marshal(ret)
+
+      // Return the JSON as a string.
+      return string(j)
+    } else if c_err == nil && i_err != nil {
       // Compiler returned 0, interpreter returned non 0.
       rs, query_err = aConn.Query(`
         INSERT INTO Submission(team_id, problem_id, judged)
@@ -336,7 +405,17 @@ func main() {
       }
       defer rs.Close()
 
-      return problem_id, false, "Being judged"
+      // Put the items in the struct declared above.
+      ret.ProblemId = problem_id
+      ret.IsJudged = false
+      ret.JudgeMessage = "Being judged currently. Expect a response soon."
+      ret.Correct = false
+
+      // Marshal the JSON.
+      j, _ = json.Marshal(ret)
+
+      // Return the JSON as a string.
+      return string(j)
     } else {
       panic("uh oh");
     }
