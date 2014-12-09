@@ -58,8 +58,7 @@ CREATE TABLE `Submission` (
 	`judge_id` INTEGER NOT NULL DEFAULT -1,
 	`judged` INTEGER NOT NULL DEFAULT 0,
 	`correct` INTEGER NOT NULL DEFAULT 0,
-	`timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (`team_id`, `problem_id`)
+	`timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 --
@@ -79,6 +78,6 @@ CREATE TABLE `Language` (
 	`i_type` TEXT DEFAULT '' NOT NULL
 );
 
-INSERT INTO `Language` VALUES (1, 'python2', '', 'python2', '');
-INSERT INTO `Language` VALUES (2, 'java 7', 'javac', 'java', '');
+-- INSERT INTO `Language` VALUES (1, 'python2', '', 'python2', '');
+-- INSERT INTO `Language` VALUES (2, 'java 7', 'javac', 'java', '');
 
