@@ -49,7 +49,7 @@ INSERT INTO `Problem` VALUES (2, 'class quest', 'What class are you in?', 'ProgL
 -- Table structure for table `Submissions`
 --
 
-DROP TABLE IF EXISTS `Submissions`;
+DROP TABLE IF EXISTS `Submission`;
 
 CREATE TABLE `Submission` (
 	`submission_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
