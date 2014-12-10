@@ -5,12 +5,14 @@ import (
   "database/sql"
   "encoding/base64"
   "encoding/json"
+  "errors"
   "fmt"
   "github.com/go-martini/martini"
   "github.com/martini-contrib/binding"
   "github.com/martini-contrib/render"
   "github.com/martini-contrib/sessions"
   "io"
+  "io/ioutil"
   "log"
   "mime/multipart"
   "os"
@@ -38,30 +40,59 @@ type UploadResponse struct {
 /******************************************************************************/
 func resetDb() {
   // Remove the old database.
-  fmt.Println("ii Removing the old database.")
-  os.Remove("./db.db")
+  log.Print("ii Removing the old database.")
+  os.Remove("./ocdns.db")
 
-  // Re-create the database.
-  fmt.Println("ii Re-creating the database.")
-  cmd := exec.Command("/usr/bin/sqlite3", "ocdns.db", "<", "db.sql")
-  cmd.Stdin = os.Stdin
-  cmd.Stdout = os.Stdout
-  cmd.Stderr = os.Stderr
-  err := cmd.Run()
-
-  // Check the output.
+  binary, err := exec.LookPath("sqlite3")
   if err != nil {
-    fmt.Println("-- Failed to re-create the database.")
-    //fmt.Println("Output: " + err)
-    os.Exit(1)
+    log.Panic(err)
   }
 
-  fmt.Println("ii Successfully created the new file.")
+  // Re-create the database.
+  log.Print("ii Re-creating the database with " + binary)
+
+  // Create the system call.
+  cmd := exec.Command(binary, "ocdns.db")
+
+  // Read the database file in.
+  file, err := ioutil.ReadFile("./db.sql")
+  if err != nil {
+    log.Panic(err)
+  }
+
+  // Create pipe and write everything into the pipe.
+  stdin, err := cmd.StdinPipe()
+  if err != nil {
+    log.Panic(err)
+  }
+
+  // Set the io stuff.
+  cmd.Stdout = os.Stdout
+  cmd.Stderr = os.Stderr
+
+  // Start the command.
+  if err = cmd.Start(); err != nil {
+    log.Panic(err)
+  }
+
+  // Write the file in.
+  io.WriteString(stdin, string(file))
+  stdin.Close()
+
+  log.Print("ii After write.")
+
+  // Wait for the process.
+  err = cmd.Wait()
+  if err != nil {
+    log.Panic(err)
+  }
+
+  log.Print("ii Successfully created the new database.")
 }
 
 
 /******************************************************************************/
-func genAdmin() bool {
+func genAdmin() error {
   // Create a hasher and generate a password.
   hasher := sha1.New()
   now := fmt.Sprint(time.Now())
@@ -77,14 +108,14 @@ func genAdmin() bool {
   `)
   if aErr != nil {
     log.Fatal(aErr)
-    return false
+    return errors.New("bad database: admin account not created")
   }
   defer rs.Close()
 
   // Report the password to the user.
-  fmt.Println("!! Password for the admin account is: " + sha)
+  log.Print("!! Admin password: " + sha)
 
-  return true
+  return nil
 }
 
 
@@ -125,12 +156,12 @@ func getLanguage(language string) (string, string, string, string, string, strin
 /******************************************************************************/
 func main() {
   // Reset the database.
-  //resetDb()
+  resetDb()
 
   // Create the default admin account.
-  gen := genAdmin()
-  if !gen {
-    log.Print("-- Admin account not created.")
+  err := genAdmin()
+  if err != nil {
+    log.Print(err)
   }
 
 
