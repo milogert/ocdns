@@ -236,15 +236,15 @@ func main() {
     // render a specific page based on their role.
     role := session.Get("role").(string)
 
-    if role == "admin" {
-      r.HTML(302, "admin", "")
-    } else if role == "judge" {
-      r.HTML(302, "judge", "")
-    } else if role == "player" {
-      r.HTML(302, "player", "")
-    } else {
+    // if role == "admin" {
+    //   r.HTML(302, "admin", "")
+    // } else if role == "judge" {
+    //   r.HTML(302, "judge", "")
+    // } else if role == "player" {
+    //   r.HTML(302, "player", "")
+    // } else {
       r.HTML(200, "index", "")
-    }
+    // }
   })
 
   m.Get("/login", binding.Bind(LoginForm{}), func(r render.Render, session sessions.Session, form LoginForm) string {
@@ -391,11 +391,11 @@ func main() {
   m.Get("/admin", func(r render.Render, session sessions.Session) {
     role := session.Get("role").(string)
 
-    if role == "admin" {
+    // if role == "admin" {
       r.HTML(200, "admin", "test")
-    } else {
+    // } else {
      r.HTML(302, "index", "test")
-    }
+    // }
   })
 
   /* Player route *************************************************************/
