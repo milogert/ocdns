@@ -6,6 +6,7 @@ import (
   "encoding/base64"
   "encoding/json"
   "errors"
+  "flag"
   "fmt"
   "github.com/go-martini/martini"
   "github.com/martini-contrib/binding"
@@ -23,6 +24,20 @@ import (
 )
 
 /* Structs ********************************************************************/
+type LoginForm struct {
+  Username    string    `form:"username" binding:"required"`
+  Password    string    `form:"password" binding:"required"`
+}
+
+type Context struct {
+  Id          int       `json:"id"`
+  Username    string    `json:"username"`
+  NameFirst   string    `json:"name_first"`
+  NameLast    string    `json:"name_last"`
+  Role        string    `json:"role"`
+  TeamId      int       `json:"team_id"`
+}
+
 type FileUpload struct {
   ProblemNum  int                   `form:"problemNum"  binding:"required"`
   Language    int                   `form:"language"    binding:"required"`
@@ -30,10 +45,10 @@ type FileUpload struct {
 }
 
 type UploadResponse struct {
-  ProblemId string `json:"problem_id"`
-  IsJudged bool `json:"is_judged"`
-  JudgeMessage string `json:"message"`
-  Correct bool `json:"correct"`
+  ProblemId     string  `json:"problem_id"`
+  IsJudged      bool    `json:"is_judged"`
+  JudgeMessage  string  `json:"message"`
+  Correct       bool    `json:"correct"`
 }
 
 
@@ -92,33 +107,52 @@ func resetDb() {
 
 
 /******************************************************************************/
-func genAdmin() error {
+func genAdmin(s string) error {
   // Create a hasher and generate a password.
   hasher := sha1.New()
   now := fmt.Sprint(time.Now())
   hasher.Write([]byte(now))
-  sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
+  var pwd string
+  if s == "" {
+    pwd = base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+  } else {
+    pwd = s
+  }
 
   // Insert the password into the database.
   aConn, _ := sql.Open("sqlite3", "ocdns.db")
   defer aConn.Close()
-  rs, aErr := aConn.Query(`
-    INSERT INTO User
-    VALUES(0, "admin", "` + sha + `", "Admin", "Admin", "admin", -1);
-  `)
-  if aErr != nil {
-    log.Fatal(aErr)
-    return errors.New("bad database: admin account not created")
+
+  // Check to see if the admin account exists
+  rs, err := aConn.Query("SELECT password FROM User WHERE username = 'admin'")
+  if err != nil {
+    log.Fatal(err)
   }
-  defer rs.Close()
+  if b := rs.Next(); b == true {
+    var pwd string
+    rs.Scan(&pwd)
+    log.Print("ii Admin account already exists with password " + pwd)
 
-  // Report the password to the user.
-  log.Print("!! Admin password: " + sha)
+    return errors.New("account error: admin account already exists")
+  } else {
+    _, err = aConn.Exec(`
+      INSERT INTO User
+      VALUES(0, "admin", "` + pwd + `", "Admin", "Admin", "admin", -1);
+    `)
+    if err != nil {
+      log.Fatal(err)
+      return errors.New("bad database: admin account not created")
+    }
 
-  return nil
+    // Report the password to the user.
+    log.Print("!! Admin password: " + pwd)
+
+    return nil
+  }
 }
 
-
+/******************************************************************************/
 func getLanguage(language string) (string, string, string, string, string, string) {
   // Open the database.
   aConn, _ := sql.Open("sqlite3", "ocdns.db")
@@ -153,15 +187,31 @@ func getLanguage(language string) (string, string, string, string, string, strin
   return compiler, c_flags, c_type, interpreter, i_flags, i_type
 }
 
+
 /******************************************************************************/
 func main() {
+  // Define some command line flags.
+  var reset bool
+  flag.BoolVar(&reset, "r", false, "Resets the database and generates an admin account.")
+
+  var pwd string
+  flag.StringVar(&pwd, "p", "", "Provides the password for the admin account.")
+
+  // Parse the flags.
+  flag.Parse()
+
   // Reset the database.
-  resetDb()
+  _, err := os.Stat("ocdns.db")
+  if reset || os.IsNotExist(err) {
+    resetDb()
+  }
 
   // Create the default admin account.
-  err := genAdmin()
-  if err != nil {
-    log.Print(err)
+  if pwd != "" || reset {
+    err = genAdmin(pwd)
+    if err != nil {
+      log.Print(err)
+    }
   }
 
 
@@ -172,9 +222,8 @@ func main() {
   m := martini.Classic()
 
   // Create session store.
-  now := fmt.Sprint(time.Now())
-  store := sessions.NewCookieStore([]byte(now))
-  m.Use(sessions.Sessions("ocdns", store))
+  store := sessions.NewCookieStore([]byte("ocdns"))
+  m.Use(sessions.Sessions("my_session", store))
 
   // Set a layout.
   m.Use(render.Renderer(render.Options{
@@ -185,7 +234,7 @@ func main() {
   m.Get("/", func(r render.Render, session sessions.Session) {
     // TODO: Perform checks to see if the user is logged in. If they are, then
     // render a specific page based on their role.
-    role := session.Get("role")
+    role := session.Get("role").(string)
 
     if role == "admin" {
       r.HTML(302, "admin", "")
@@ -196,6 +245,135 @@ func main() {
     } else {
       r.HTML(200, "index", "")
     }
+  })
+
+  m.Get("/login", binding.Bind(LoginForm{}), func(r render.Render, session sessions.Session, form LoginForm) string {
+    // Get info from the database.
+    conn, err := sql.Open("sqlite3", "ocdns.db")
+    defer conn.Close()
+
+    // Prepare the statement.
+    stmt, err := conn.Prepare(`
+      SELECT user_id, username, name_first, name_last, role, team_id
+      FROM User
+      WHERE username = ? AND password = ?
+      LIMIT 1;
+    `)
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer stmt.Close()
+
+    // Query the database and set appropriate items if a row was actually returned.
+    var id string
+    var username string
+    var name_first string
+    var name_last string
+    var role string
+    var team_id string
+
+    err = stmt.QueryRow(form.Username, form.Password).Scan(&id, &username, &name_first, &name_last, &role, &team_id)
+
+    if err != nil {
+      log.Print("!! Bad login from " + form.Username + " with " + form.Password)
+      log.Fatal(err)
+    } else {
+      log.Print(">" + id + "<")
+      log.Print(">" + username + "<")
+      log.Print(">" + name_first + "<")
+      log.Print(">" + name_last + "<")
+      log.Print(">" + role + "<")
+      log.Print(">" + team_id + "<")
+      session.Set("id", id)
+      session.Set("username", username)
+      session.Set("name_first", name_first)
+      session.Set("name_last", name_last)
+      session.Set("role", role)
+      session.Set("team_id", team_id)
+
+      v := session.Get("name_first")
+      if v == nil {
+        log.Print("!! Uh oh.")
+      }
+      log.Print(v.(string))
+
+      return "OK"
+    }
+
+    return "Bad"
+  })
+
+  m.Get("/session", func(session sessions.Session) string {
+    var c Context
+
+    i := session.Get("id")
+    if i == nil {
+      c.Id = -1
+    }
+
+    c.Id, _ = strconv.Atoi(i.(string))
+
+
+    i = session.Get("username")
+    if i == nil {
+      log.Print("!! username")
+    }
+
+    if vs, ok := i.(string); ok {
+      c.Username = vs
+    } else {
+      log.Print(vs)
+    }
+
+    // i = s.Get("name_first")
+    // if i == nil {
+    //   log.Print("!! name_first")
+    // }
+
+    // if vs, ok := i.(string); ok {
+    //   c.NameFirst = vs
+    // } else {
+    //   log.Print(string(vs))
+    // }
+
+    // i = s.Get("name_last")
+    // if i == nil {
+    //   log.Print("!! name_last")
+    // }
+
+    // if vs, ok := i.(string); ok {
+    //   c.NameLast = vs
+    // } else {
+    //   log.Print(string(vs))
+    // }
+
+    // i = s.Get("role")
+    // if i == nil {
+    //   log.Print("!! role")
+    // }
+
+    // if vs, ok := i.(string); ok {
+    //   c.Role = vs
+    // } else {
+    //   log.Print(string(vs))
+    // }
+
+    // i = s.Get("team_id")
+    // if i == nil {
+    //   log.Print("!! team_id")
+    // }
+
+    // if vi, ok := i.(int); ok {
+    //   c.TeamId = vi
+    // } else {
+    //   log.Print(string(vi))
+    // }
+
+    log.Print(c)
+
+    j, _ := json.Marshal(c)
+
+    return string(j)
   })
 
   /* Judge route **************************************************************/
@@ -211,13 +389,13 @@ func main() {
 
   /* Admin route **************************************************************/
   m.Get("/admin", func(r render.Render, session sessions.Session) {
-    //role := session.Get("role")
+    role := session.Get("role").(string)
 
-    //if role == "admin" {
-    r.HTML(200, "admin", "test")
-    //} else {
-    //  r.HTML(302, "index", "test")
-    //}
+    if role == "admin" {
+      r.HTML(200, "admin", "test")
+    } else {
+     r.HTML(302, "index", "test")
+    }
   })
 
   /* Player route *************************************************************/

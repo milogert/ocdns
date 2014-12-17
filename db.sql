@@ -10,9 +10,6 @@ CREATE TABLE `Team` (
 	`name` CHAR(64) DEFAULT '' NOT NULL
 );
 
-INSERT INTO `Team` VALUES (1, 'GoLang');
-INSERT INTO `Team` VALUES (2, 'Swift');
-
 --
 -- Table structure for table `User`
 --
@@ -23,8 +20,8 @@ CREATE TABLE `User` (
 	`user_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`username` TEXT NOT NULL,
 	`password` TEXT NOT NULL,
-	`name_first` CHAR(64) NOT NULL,
-	`name_last` CHAR(64) NOT NULL,
+	`name_first` TEXT NOT NULL,
+	`name_last` TEXT NOT NULL,
 	`role` TEXT DEFAULT 'player' NOT NULL,
 	`team_id` INTEGER NOT NULL DEFAULT 0
 );
@@ -42,8 +39,8 @@ CREATE TABLE `Problem` (
 	`answer` TEXT NOT NULL
 );
 
-INSERT INTO `Problem` VALUES (1, 'Bad question', 'What is your team name?', 'GoLang');
-INSERT INTO `Problem` VALUES (2, 'class quest', 'What class are you in?', 'ProgLang');
+INSERT INTO `Problem` VALUES (0, 'Bad question', 'What is your team name?', 'GoLang');
+INSERT INTO `Problem` VALUES (1, 'class quest', 'What class are you in?', 'ProgLang');
 
 --
 -- Table structure for table `Submissions`
@@ -78,6 +75,6 @@ CREATE TABLE `Language` (
 	`i_type` TEXT DEFAULT '' NOT NULL
 );
 
--- INSERT INTO `Language` VALUES (1, 'python2', '', 'python2', '');
--- INSERT INTO `Language` VALUES (2, 'java 7', 'javac', 'java', '');
+INSERT INTO `Language` VALUES (0, 'python2', '', '', '', 'python2', '', 'py');
+INSERT INTO `Language` VALUES (1, 'java 7', 'javac', '', 'java', 'java', '', 'class');
 
